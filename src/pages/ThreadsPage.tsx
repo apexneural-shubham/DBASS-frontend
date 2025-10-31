@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import Layout from '@/components/Layout';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +55,7 @@ const ThreadsPage = () => {
     // Only fetch if we don't have stored posts or if it's a new query
     if (isMounted) {
       if (storedRedditPosts.length === 0 || storedQuery !== query) {
-        fetchRedditPosts(query);
+    fetchRedditPosts(query);
       } else {
         // Use stored posts, no API call needed
         setRedditPosts(storedRedditPosts);
@@ -165,24 +164,24 @@ const ThreadsPage = () => {
       setAnalysisResults(analysisResults);
 
       // Store thread config
-      const config = Array.from(selectedThreads).map(threadId => ({
-        threadId,
+    const config = Array.from(selectedThreads).map(threadId => ({
+      threadId,
         selectedOptions: [threadId],
-      }));
-      setThreadConfig(config);
+    }));
+    setThreadConfig(config);
 
       toast.dismiss(loadingToast);
       toast.success(`${selectedThreads.size} thread${selectedThreads.size > 1 ? 's' : ''} analyzed successfully!`, {
-        icon: '✅',
-        style: {
-          background: '#10b981',
-          color: '#fff',
-        },
-      });
-      
-      setTimeout(() => {
-        navigate('/options');
-      }, 300);
+      icon: '✅',
+      style: {
+        background: '#10b981',
+        color: '#fff',
+      },
+    });
+    
+    setTimeout(() => {
+      navigate('/options');
+    }, 300);
     } catch (error) {
       toast.dismiss(loadingToast);
       
@@ -327,7 +326,6 @@ const ThreadsPage = () => {
   );
 
   return (
-    <Layout>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -551,7 +549,6 @@ const ThreadsPage = () => {
           </motion.div>
         )}
       </motion.div>
-    </Layout>
   );
 };
 

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import Layout from '@/components/Layout';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,18 +13,15 @@ interface NestedTopic {
   [key: string]: NestedTopic | Record<string, never>;
 }
 
-interface CategoryData {
+interface MainTopicData {
   name: string;
-  subTopics: {
-    name: string;
-    children: string[];
-  }[];
+  subtopics: string[];
 }
 
 interface ParsedResult {
   mainTopic: string;
   childTopic: string;
-  categories: CategoryData[];
+  topics: MainTopicData[];
 }
 
 const ResultsPage = () => {
@@ -34,10 +30,8 @@ const ResultsPage = () => {
   const searchQuery = searchParams.get('q');
   
   const [parsedResults, setParsedResults] = useState<ParsedResult | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [expandedSubTopics, setExpandedSubTopics] = useState<Set<string>>(new Set());
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [selectedSubTopics, setSelectedSubTopics] = useState<Set<string>>(new Set());
+  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -69,109 +63,77 @@ const ResultsPage = () => {
     }
   }, [searchQuery]);
 
-  // Parse the nested structure: Main Topic → Child Topic → Categories → Sub-topics
+  // Parse the nested structure dynamically: Each main topic becomes a dropdown with its subtopics
   const parseMarketIdeas = (data: MarketIdeasResponse): ParsedResult | null => {
-    // Get the first main topic (e.g., "Health", "Wealth", "Relationships")
+    // Get the first main topic (e.g., "Wealth", "Health", "Relationships")
     const mainTopicKey = Object.keys(data)[0];
     if (!mainTopicKey) return null;
 
     const mainTopicData = data[mainTopicKey];
     
-    // Get the first child topic (e.g., "Health Drinks")
+    // Get the first child topic (e.g., "Digital Media Tools")
     const childTopicKey = Object.keys(mainTopicData)[0];
     if (!childTopicKey) return null;
 
-    const categories = mainTopicData[childTopicKey];
+    const categoriesData = mainTopicData[childTopicKey];
     
-    // Parse categories (third level)
-    const categoryList: CategoryData[] = [];
+    // Each category becomes a main topic with its own dropdown
+    const topicsList: MainTopicData[] = [];
     
-    Object.entries(categories).forEach(([categoryName, subTopics]) => {
-      const subTopicsList: { name: string; children: string[] }[] = [];
-      
-      // Parse sub-topics (fourth level and beyond)
-      Object.entries(subTopics as NestedTopic).forEach(([subTopicName, children]) => {
-        const childrenList = Object.keys(children);
-        subTopicsList.push({
-          name: subTopicName,
-          children: childrenList,
+    // First level: Categories (e.g., "AI Image Enhancement")
+    Object.entries(categoriesData).forEach(([categoryName, categoryContent]) => {
+      // Second level: Main topics under each category (e.g., "Photo Restoration", "Batch Processing")
+      Object.entries(categoryContent as NestedTopic).forEach(([mainTopicName, subtopicsData]) => {
+        // Third level: Subtopics (the actual leaf nodes)
+        const subtopicsList = Object.keys(subtopicsData).filter(key => key !== '');
+        
+        topicsList.push({
+          name: mainTopicName,
+          subtopics: subtopicsList,
         });
-      });
-      
-      categoryList.push({
-        name: categoryName,
-        subTopics: subTopicsList,
       });
     });
 
     return {
       mainTopic: mainTopicKey,
       childTopic: childTopicKey,
-      categories: categoryList,
+      topics: topicsList,
     };
   };
 
-  const toggleCategory = (categoryName: string) => {
-    setExpandedCategories((prev) => {
+  const toggleTopic = (topicName: string) => {
+    setExpandedTopics((prev) => {
       const next = new Set(prev);
-      if (next.has(categoryName)) {
-        next.delete(categoryName);
+      if (next.has(topicName)) {
+        next.delete(topicName);
       } else {
-        next.add(categoryName);
+        next.add(topicName);
       }
       return next;
     });
   };
 
-  const toggleSubTopic = (subTopicId: string) => {
-    setExpandedSubTopics((prev) => {
+  const handleTopicSelect = (topicName: string) => {
+    setSelectedTopics((prev) => {
       const next = new Set(prev);
-      if (next.has(subTopicId)) {
-        next.delete(subTopicId);
+      if (next.has(topicName)) {
+        next.delete(topicName);
       } else {
-        next.add(subTopicId);
-      }
-      return next;
-    });
-  };
-
-  const handleCategorySelect = (categoryName: string) => {
-    setSelectedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(categoryName)) {
-        next.delete(categoryName);
-      } else {
-        next.add(categoryName);
-      }
-      return next;
-    });
-  };
-
-  const handleSubTopicSelect = (categoryName: string, subTopicName: string) => {
-    const id = `${categoryName}-${subTopicName}`;
-    setSelectedSubTopics((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+        next.add(topicName);
       }
       return next;
     });
   };
 
   const handleProceed = () => {
-    const allSelected = [
-      ...Array.from(selectedCategories),
-      ...Array.from(selectedSubTopics).map(id => id.split('-').pop() || '')
-    ].filter(Boolean);
+    const allSelected = Array.from(selectedTopics);
     
     if (allSelected.length === 0) {
-      toast.error('Please select at least one item', { icon: '⚠️' });
+      toast.error('Please select at least one topic', { icon: '⚠️' });
       return;
     }
     
-    // Navigate to threads with all selected items as a combined query
+    // Navigate to threads with all selected topics as a combined query
     const query = allSelected.join(', ');
     toast.success(`Searching Reddit for ${allSelected.length} topic${allSelected.length > 1 ? 's' : ''}!`, { 
       icon: '🔍' 
@@ -183,7 +145,7 @@ const ResultsPage = () => {
   };
 
   const handleBack = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const formatTitle = (query: string) => {
@@ -197,7 +159,6 @@ const ResultsPage = () => {
   const pageTitle = searchQuery ? formatTitle(searchQuery) : 'Search Results';
 
   return (
-    <Layout>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -241,16 +202,16 @@ const ResultsPage = () => {
             </div>
           )}
           <p className="text-slate-400 text-base">
-            {parsedResults ? `${parsedResults.categories.length} categories found` : 'Loading results...'}
+            {parsedResults ? `${parsedResults.topics.length} topics found` : 'Loading results...'}
           </p>
-          {(selectedCategories.size > 0 || selectedSubTopics.size > 0) && (
+          {selectedTopics.size > 0 && (
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="inline-flex items-center gap-2 bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-full border border-cyan-500/30 mt-2"
             >
               <Check className="h-4 w-4" />
-              {selectedCategories.size + selectedSubTopics.size} selected
+              {selectedTopics.size} selected
             </motion.div>
           )}
         </motion.div>
@@ -287,7 +248,7 @@ const ResultsPage = () => {
           </motion.div>
         )}
 
-        {/* Results Grid - Categories as Cards */}
+        {/* Results - Topic Dropdown Accordions */}
         {!isLoading && !hasError && parsedResults && (
           <motion.div
             initial="hidden"
@@ -295,72 +256,83 @@ const ResultsPage = () => {
             variants={{
               visible: {
                 transition: {
-                  staggerChildren: 0.1,
+                  staggerChildren: 0.05,
                 },
               },
             }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4"
           >
-            {parsedResults.categories.map((category) => {
-              const isExpanded = expandedCategories.has(category.name);
-              const isSelected = selectedCategories.has(category.name);
+            {parsedResults.topics.map((topic, index) => {
+              const isExpanded = expandedTopics.has(topic.name);
+              const isSelected = selectedTopics.has(topic.name);
 
               return (
                 <motion.div
-                  key={category.name}
+                  key={`${topic.name}-${index}`}
                   variants={{
-                    hidden: { opacity: 0, y: 20 },
+                    hidden: { opacity: 0, y: 10 },
                     visible: { opacity: 1, y: 0 },
                   }}
-                  className="h-fit"
                 >
                   <Card className={cn(
-                    "bg-slate-800/50 backdrop-blur-sm transition-all h-full cursor-pointer",
+                    "bg-slate-800/50 backdrop-blur-sm transition-all cursor-pointer border-2",
                     isSelected 
                       ? "border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/20" 
-                      : "border-slate-700 hover:border-cyan-500/50"
+                      : "border-slate-700/50 hover:border-slate-600"
                   )}>
+                    {/* Header - Always visible */}
                     <CardHeader 
-                      onClick={() => handleCategorySelect(category.name)}
+                      className="py-4 px-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTopicSelect(topic.name);
+                      }}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-xl text-white mb-2 pr-4">
-                            {category.name}
-                          </CardTitle>
-                          <CardDescription className="text-slate-400">
-                            {category.subTopics.length} sub-topic{category.subTopics.length !== 1 ? 's' : ''}
-                          </CardDescription>
-                        </div>
-                        
-                        {/* Selection Checkbox and Expand Button */}
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          {/* Selection Checkbox */}
                           <div className={cn(
-                            'w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all',
+                            'w-6 h-6 rounded border-2 flex items-center justify-center transition-all flex-shrink-0',
                             isSelected
                               ? 'bg-cyan-500 border-cyan-500 text-white'
-                              : 'bg-slate-700 border-slate-500 hover:border-cyan-400'
+                              : 'border-slate-500 hover:border-cyan-400'
                           )}>
-                            {isSelected && <Check className="h-5 w-5" />}
+                            {isSelected && <Check className="h-4 w-4" />}
                           </div>
                           
+                          {/* Topic Name */}
+                          <CardTitle className="text-lg text-white font-semibold">
+                            {topic.name}
+                          </CardTitle>
+                          
+                          {/* Subtopic Count Badge */}
+                          {topic.subtopics.length > 0 && (
+                            <span className="text-xs text-slate-400 bg-slate-700/50 px-2 py-1 rounded-full">
+                              {topic.subtopics.length} subtopic{topic.subtopics.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Expand/Collapse Button */}
+                        {topic.subtopics.length > 0 && (
                           <motion.div
                             animate={{ rotate: isExpanded ? 180 : 0 }}
                             transition={{ duration: 0.3 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleCategory(category.name);
+                              toggleTopic(topic.name);
                             }}
-                            className="cursor-pointer flex-shrink-0"
+                            className="cursor-pointer p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
                           >
                             <ChevronDown className="h-5 w-5 text-slate-400" />
                           </motion.div>
-                        </div>
+                        )}
                       </div>
                     </CardHeader>
 
+                    {/* Expandable Subtopics Section */}
                     <AnimatePresence initial={false}>
-                      {isExpanded && (
+                      {isExpanded && topic.subtopics.length > 0 && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
@@ -368,85 +340,34 @@ const ResultsPage = () => {
                           transition={{ duration: 0.3, ease: 'easeInOut' }}
                           className="overflow-hidden"
                         >
-                          <CardContent className="pt-0 space-y-3">
-                            {category.subTopics.map((subTopic) => {
-                              const subTopicId = `${category.name}-${subTopic.name}`;
-                              const isSubTopicExpanded = expandedSubTopics.has(subTopicId);
-                              const isSubTopicSelected = selectedSubTopics.has(subTopicId);
-
-                              return (
-                                <div
-                                  key={subTopic.name}
-                                  className="border-l-2 border-cyan-500/30 pl-4 space-y-2"
-                                >
-                                  {/* Sub-topic - now selectable */}
-                                  <div
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSubTopicSelect(category.name, subTopic.name);
-                                    }}
-                                    className={cn(
-                                      'flex items-center gap-2 font-medium group cursor-pointer p-2 rounded-lg transition-all',
-                                      isSubTopicSelected 
-                                        ? 'bg-cyan-500/10 text-cyan-200' 
-                                        : 'text-cyan-300 hover:bg-slate-700/50'
-                                    )}
-                                  >
-                                    <div className={cn(
-                                      'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0',
-                                      isSubTopicSelected 
-                                        ? 'bg-cyan-500 border-cyan-500' 
-                                        : 'border-slate-500'
-                                    )}>
-                                      {isSubTopicSelected && <Check className="h-3 w-3 text-white" />}
-                                    </div>
-                                    <span className="text-sm flex-1">{subTopic.name}</span>
-                                    
-                                    {subTopic.children.length > 0 && (
-                                      <motion.div
-                                        animate={{ rotate: isSubTopicExpanded ? 90 : 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleSubTopic(subTopicId);
-                                        }}
-                                      >
-                                        <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                                      </motion.div>
-                                    )}
-                                  </div>
-
-                                  {/* Nested children */}
-                                  <AnimatePresence initial={false}>
-                                    {isSubTopicExpanded && subTopic.children.length > 0 && (
-                                      <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: 'auto', opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="overflow-hidden pl-6 space-y-1"
-                                      >
-                                        {subTopic.children.map((child) => (
-                                          <div
-                                            key={child}
-                                            className="flex items-center gap-2 text-slate-400 text-sm py-1"
+                          <CardContent className="pt-0 pb-4 px-6">
+                            <div className="border-t border-slate-700/50 pt-3">
+                              <ul className="space-y-2">
+                                {topic.subtopics.map((subtopic, subIndex) => (
+                                  <motion.li
+                                    key={`${subtopic}-${subIndex}`}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: subIndex * 0.05 }}
+                                    className="flex items-start gap-3 text-slate-300 hover:text-cyan-400 transition-colors group"
                                           >
-                                            <span className="text-slate-600">•</span>
-                                            <span className="hover:text-slate-300 transition-colors">
-                                              {child}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
+                                    <span className="text-cyan-500 mt-1.5 flex-shrink-0">•</span>
+                                    <span className="text-sm leading-relaxed">{subtopic}</span>
+                                  </motion.li>
+                                ))}
+                              </ul>
                                 </div>
-                              );
-                            })}
                           </CardContent>
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    
+                    {/* Empty subtopics message */}
+                    {topic.subtopics.length === 0 && (
+                      <CardContent className="pt-0 pb-4 px-6">
+                        <p className="text-slate-500 text-sm italic">No subtopics available</p>
+                      </CardContent>
+                    )}
                   </Card>
                 </motion.div>
               );
@@ -455,14 +376,14 @@ const ResultsPage = () => {
         )}
 
         {/* Empty State */}
-        {!isLoading && !hasError && parsedResults && parsedResults.categories.length === 0 && (
+        {!isLoading && !hasError && parsedResults && parsedResults.topics.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-center py-20"
           >
             <p className="text-slate-400 text-lg mb-4">
-              No categories found in the results
+              No topics found in the results
             </p>
             <Button
               onClick={handleBack}
@@ -474,7 +395,7 @@ const ResultsPage = () => {
         )}
 
         {/* Action Buttons */}
-        {!isLoading && !hasError && parsedResults && parsedResults.categories.length > 0 && (
+        {!isLoading && !hasError && parsedResults && parsedResults.topics.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -491,18 +412,17 @@ const ResultsPage = () => {
 
             <Button
               onClick={handleProceed}
-              disabled={selectedCategories.size === 0 && selectedSubTopics.size === 0}
+              disabled={selectedTopics.size === 0}
               className={cn(
                 "rounded-2xl px-8 py-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-xl transition-all",
-                (selectedCategories.size === 0 && selectedSubTopics.size === 0) && "opacity-50 cursor-not-allowed"
+                selectedTopics.size === 0 && "opacity-50 cursor-not-allowed"
               )}
             >
-              Search Reddit ({selectedCategories.size + selectedSubTopics.size} selected) →
+              Search Reddit ({selectedTopics.size} selected) →
             </Button>
           </motion.div>
         )}
       </motion.div>
-    </Layout>
   );
 };
 

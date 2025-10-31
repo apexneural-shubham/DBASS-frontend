@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import Layout from '@/components/Layout';
 import SearchBar from '@/components/SearchBar';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { useFlowStore } from '@/store/flowStore';
@@ -34,50 +33,50 @@ const SearchPage = () => {
         
         // Fallback to mock data for development
         const fallbackTopics: TrendingTopic[] = [
-          {
-            id: '1',
-            category: 'Health',
-            trend: '+245%',
+    {
+      id: '1',
+      category: 'Health',
+      trend: '+245%',
             volume: '120K',
-            title: 'AI Ethics in Healthcare',
-          },
-          {
-            id: '2',
-            category: 'Wealth',
-            trend: '+189%',
+      title: 'AI Ethics in Healthcare',
+    },
+    {
+      id: '2',
+      category: 'Wealth',
+      trend: '+189%',
             volume: '350K',
-            title: 'Crypto Tax Planning 2025',
-          },
-          {
-            id: '3',
-            category: 'Relationships',
-            trend: '+167%',
+      title: 'Crypto Tax Planning 2025',
+    },
+    {
+      id: '3',
+      category: 'Relationships',
+      trend: '+167%',
             volume: '89K',
-            title: 'Remote Relationship Building',
-          },
-          {
-            id: '4',
-            category: 'Health',
-            trend: '+134%',
+      title: 'Remote Relationship Building',
+    },
+    {
+      id: '4',
+      category: 'Health',
+      trend: '+134%',
             volume: '210K',
-            title: 'Biohacking for Longevity',
-          },
-          {
-            id: '5',
-            category: 'Wealth',
-            trend: '+128%',
+      title: 'Biohacking for Longevity',
+    },
+    {
+      id: '5',
+      category: 'Wealth',
+      trend: '+128%',
             volume: '180K',
-            title: 'Sustainable Investing',
-          },
-          {
-            id: '6',
-            category: 'Relationships',
-            trend: '+112%',
+      title: 'Sustainable Investing',
+    },
+    {
+      id: '6',
+      category: 'Relationships',
+      trend: '+112%',
             volume: '95K',
-            title: 'Digital Dating Safety',
-          },
-        ];
-        
+      title: 'Digital Dating Safety',
+    },
+  ];
+
         setTrendingTopics(fallbackTopics);
         toast.success('Using fallback trending topics', { icon: '🔄' });
       } finally {
@@ -192,9 +191,9 @@ const SearchPage = () => {
       sessionStorage.setItem('searchQuery', topic.title);
 
       // Navigate to results page with the topic as query
-      setTimeout(() => {
+    setTimeout(() => {
         navigate(`/results?q=${encodeURIComponent(topic.title)}`);
-      }, 300);
+    }, 300);
 
     } catch (error) {
       // Dismiss loading toast
@@ -244,7 +243,6 @@ const SearchPage = () => {
   }, [isSearchFocused]);
 
   return (
-    <Layout>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -336,40 +334,40 @@ const SearchPage = () => {
             </div>
           ) : trendingTopics.length > 0 ? (
             <>
-              {/* Topic Cards Grid */}
+          {/* Topic Cards Grid */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: {
+                transition: {
+                  staggerChildren: 0.1,
+                },
+              },
+            }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            {trendingTopics.map((topic) => (
               <motion.div
-                initial="hidden"
-                animate="visible"
+                key={topic.id}
                 variants={{
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.1,
-                    },
-                  },
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
                 }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                whileHover={{ 
+                  scale: 1.05,
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
+                }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleTopicClick(topic)}
+                className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:border-slate-600 group"
               >
-                {trendingTopics.map((topic) => (
-                  <motion.div
-                    key={topic.id}
-                    variants={{
-                      hidden: { opacity: 0, y: 20 },
-                      visible: { opacity: 1, y: 0 },
-                    }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleTopicClick(topic)}
-                    className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 cursor-pointer transition-all hover:border-slate-600 group"
-                  >
                     {/* Topic Info */}
                     <div className="flex flex-col h-full justify-between">
-                      {/* Topic Title */}
+                {/* Topic Title */}
                       <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors leading-tight mb-4">
-                        {topic.title}
-                      </h3>
+                  {topic.title}
+                </h3>
                       
                       {/* Metrics Row */}
                       <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-700">
@@ -383,24 +381,24 @@ const SearchPage = () => {
                         </div>
                       </div>
                     </div>
-                  </motion.div>
-                ))}
               </motion.div>
+            ))}
+          </motion.div>
 
-              {/* View More Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="flex justify-center pt-4"
-              >
-                <Button
-                  onClick={handleViewMore}
-                  className="rounded-full px-12 py-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-lg font-semibold shadow-xl hover:shadow-2xl hover:shadow-cyan-500/50 transition-all hover:scale-105"
-                >
-                  View More
-                </Button>
-              </motion.div>
+          {/* View More Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex justify-center pt-4"
+          >
+            <Button
+              onClick={handleViewMore}
+              className="rounded-full px-12 py-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-lg font-semibold shadow-xl hover:shadow-2xl hover:shadow-cyan-500/50 transition-all hover:scale-105"
+            >
+              View More
+            </Button>
+          </motion.div>
             </>
           ) : (
             /* Empty State */
@@ -411,7 +409,6 @@ const SearchPage = () => {
           )}
         </motion.div>
       </motion.div>
-    </Layout>
   );
 };
 

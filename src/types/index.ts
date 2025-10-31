@@ -21,6 +21,17 @@ export interface Option {
   description?: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
 export interface FlowState {
   marketId: string | null;
   selectedCards: string[];
@@ -190,4 +201,77 @@ export interface MarketGapsData {
 export interface AnalysisResults {
   pain_points: PainPointsData;
   market_gaps: MarketGapsData;
+}
+
+// Authentication types
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface SignupRequest {
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+  password: string;
+  confirm_password: string;
+  phone_number?: string;
+  date_of_birth?: string;
+  gender?: string;
+  country?: string;
+  receive_newsletters?: boolean;
+  accept_terms: boolean;
+  accept_privacy_policy: boolean;
+}
+
+export interface User {
+  id: number;
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+  phone_number?: string;
+  date_of_birth?: string;
+  gender?: string;
+  country?: string;
+  avatar?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: User;
+    token: string;
+  };
+}
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+  confirm_new_password: string;
+}
+
+// Chat and Website Creation Types
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+}
+
+export interface CreateWebsiteRequest {
+  selected_solution: Solution;
+  chat_messages: ChatMessage[];
+  opportunity_data?: OpportunityAssessment;
+}
+
+export interface CreateWebsiteResponse {
+  success: boolean;
+  message: string;
+  data: {
+    website_url?: string;
+    website_html?: string;
+    website_id?: string;
+  };
 }

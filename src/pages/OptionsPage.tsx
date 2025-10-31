@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Layout from '@/components/Layout';
 import OptionCard from '@/components/OptionCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -71,8 +70,8 @@ const OptionsPage = () => {
       // Navigate to landing page creation
       navigate('/landing-creation');
     } else {
-      reset();
-      navigate('/');
+    reset();
+      navigate('/dashboard');
     }
   };
 
@@ -337,7 +336,6 @@ const OptionsPage = () => {
   };
 
   return (
-    <Layout>
       <div className="max-w-7xl mx-auto space-y-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -345,7 +343,7 @@ const OptionsPage = () => {
         >
           <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-4">
             {hasAnalysisResults ? 'Pain Points Analysis' : 'Choose Your Plan'}
-          </h2>
+        </h2>
           {hasAnalysisResults && (
             <p className="text-center text-slate-400">
               Review the analysis results from your selected Reddit threads
@@ -356,45 +354,44 @@ const OptionsPage = () => {
         {hasAnalysisResults ? (
           renderAnalysisResults()
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {optionData.map((option) => (
-              <OptionCard
-                key={option.id}
-                id={option.id}
-                title={option.title}
-                description={option.description}
-                gradient={option.gradient}
-                icon={option.icon}
-                selected={localSelected === option.id}
-                onClick={handleOptionSelect}
-              />
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {optionData.map((option) => (
+            <OptionCard
+              key={option.id}
+              id={option.id}
+              title={option.title}
+              description={option.description}
+              gradient={option.gradient}
+              icon={option.icon}
+              selected={localSelected === option.id}
+              onClick={handleOptionSelect}
+            />
+          ))}
+        </div>
         )}
 
         <div className="flex justify-between items-center pt-8">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              onClick={handleBack}
-              variant="outline"
+          <Button
+            onClick={handleBack}
+            variant="outline"
               className="rounded-2xl px-8 py-6 bg-slate-700 hover:bg-slate-600 text-white shadow-xl border-0 flex items-center gap-2"
-            >
+          >
               <ArrowLeft className="h-4 w-4" />
               Back to Threads
-            </Button>
+          </Button>
           </motion.div>
           
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              onClick={handleBackToDashboard}
+          <Button
+            onClick={handleBackToDashboard}
               className="rounded-2xl px-8 py-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-xl transition-all"
-            >
+          >
               {hasAnalysisResults ? 'Create Landing Page' : 'Back to Dashboard'}
-            </Button>
+          </Button>
           </motion.div>
         </div>
       </div>
-    </Layout>
   );
 };
 

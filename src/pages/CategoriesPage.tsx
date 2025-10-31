@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import Layout from '@/components/Layout';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -323,7 +322,7 @@ const CategoriesPage = () => {
   };
 
   const handleBack = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const handleSubcategoryClick = (subcategoryName: string) => {
@@ -367,7 +366,6 @@ const CategoriesPage = () => {
   };
 
   return (
-    <Layout>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -446,7 +444,7 @@ const CategoriesPage = () => {
               Failed to load search results
             </p>
             <Button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
               className="rounded-full px-8 py-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
             >
               Back to Search
@@ -675,7 +673,6 @@ const CategoriesPage = () => {
           </motion.div>
         )}
       </motion.div>
-    </Layout>
   );
 };
 

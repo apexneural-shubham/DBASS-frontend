@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { Market, Selection, ThreadConfig, Option, SearchResponse, MarketIdeasResponse, RedditScrapeResponse, PainPointsAnalysisResponse, TrendingTopicsResponse, TrendingTopic } from '@/types';
+import { Market, Selection, ThreadConfig, Option, SearchResponse, MarketIdeasResponse, RedditScrapeResponse, PainPointsAnalysisResponse, TrendingTopicsResponse, TrendingTopic, LoginRequest, SignupRequest, AuthResponse, User, ChangePasswordRequest, CreateWebsiteRequest, CreateWebsiteResponse, ForgotPasswordRequest, ResetPasswordRequest } from '@/types';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -112,6 +112,35 @@ const handleApiError = (error: unknown): never => {
 };
 
 export const apiService = {
+  // Auth endpoints
+  checkEmail: async (email: string): Promise<boolean> => {
+    try {
+      const response = await api.post('/auth/check-email', { email });
+      return response.data.exists;
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  forgotPassword: async (data: ForgotPasswordRequest): Promise<void> => {
+    try {
+      // Only send email as that's what backend expects
+      await api.post('/auth/forgot-password', {
+        email: data.email
+      });
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
+  resetPassword: async (data: ResetPasswordRequest): Promise<void> => {
+    try {
+      await api.post('/auth/reset-password', data);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  },
+
   // Market endpoints
   getMarkets: async (): Promise<Market[]> => {
     try {
@@ -425,6 +454,91 @@ export const apiService = {
         throw new Error(`Failed to fetch trending topics: ${errorMessage}`);
       }
       throw new Error('Failed to fetch trending topics');
+    }
+  },
+
+  // Authentication
+  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
+    try {
+      console.log('🔐 Logging in user...');
+      const { data } = await searchApi.post<AuthResponse>('/auth/login', credentials);
+      console.log('✅ Login successful');
+      return data;
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        throw new Error(`Login failed: ${errorMessage}`);
+      }
+      throw new Error('Login failed');
+    }
+  },
+
+  signup: async (userData: SignupRequest): Promise<AuthResponse> => {
+    try {
+      console.log('✨ Creating new account...');
+      const { data } = await searchApi.post<AuthResponse>('/auth/signup', userData);
+      console.log('✅ Signup successful');
+      return data;
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        throw new Error(`Signup failed: ${errorMessage}`);
+      }
+      throw new Error('Signup failed');
+    }
+  },
+
+  getUserProfile: async (userId: number): Promise<User> => {
+    try {
+      console.log(`👤 Fetching user profile for ID: ${userId}...`);
+      const { data } = await searchApi.get<{ success: boolean; data: User }>(`/auth/user/${userId}`);
+      console.log('✅ User profile fetched');
+      return data.data;
+    } catch (error) {
+      console.error('❌ Get user profile error:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        throw new Error(`Failed to fetch user profile: ${errorMessage}`);
+      }
+      throw new Error('Failed to fetch user profile');
+    }
+  },
+
+  changePassword: async (userId: number, passwordData: ChangePasswordRequest): Promise<{ success: boolean; message: string }> => {
+    try {
+      console.log(`🔒 Changing password for user ID: ${userId}...`);
+      const { data } = await searchApi.post<{ success: boolean; message: string }>(`/auth/change-password/${userId}`, passwordData);
+      console.log('✅ Password changed successfully');
+      return data;
+    } catch (error) {
+      console.error('❌ Change password error:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        throw new Error(`Failed to change password: ${errorMessage}`);
+      }
+      throw new Error('Failed to change password');
+    }
+  },
+
+  // Website Creation
+  createWebsite: async (websiteData: CreateWebsiteRequest): Promise<CreateWebsiteResponse> => {
+    try {
+      console.log('🌐 Creating website...');
+      console.log('Selected solution:', websiteData.selected_solution.name);
+      console.log('Chat messages:', websiteData.chat_messages.length);
+      
+      const { data } = await searchApi.post<CreateWebsiteResponse>('/create_website', websiteData);
+      console.log('✅ Website created successfully');
+      return data;
+    } catch (error) {
+      console.error('❌ Website creation error:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        throw new Error(`Failed to create website: ${errorMessage}`);
+      }
+      throw new Error('Failed to create website');
     }
   },
 };
